@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WinSlot NG</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ─── TOKENS ─────────────────────────────────────── */
+:root {
+  --bg:       #F5F5F3;
+  --surface:  #FFFFFF;
+  --surface2: #EFEFED;
+  --border:   #E2E2DF;
+  --border2:  #CACAC5;
+  --text:     #111110;
+  --text2:    #3D3D3A;
+  --muted:    #888882;
+  --green:    #1A7A4A;
+  --green-bg: #EAF5EF;
+  --red:      #C0392B;
+  --red-bg:   #FDECEA;
+  --amber:    #92660A;
+  --amber-bg: #FEF7E6;
+  --blue:     #1A5CA8;
+  --blue-bg:  #EAF0FB;
+  --radius:   10px;
+  --shadow:   0 1px 3px rgba(0,0,0,0.07), 0 4px 14px rgba(0,0,0,0.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;font-size:15px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surface2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ─── NAV ─────────────────────────────────────────── */
+nav{
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+}
+.logo{font-weight:800;font-size:18px;letter-spacing:-0.3px;cursor:pointer;}
+.logo span{color:var(--muted);font-weight:600;}
+.nav-links{display:flex;align-items:center;gap:4px;}
+.nav-btn{background:none;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--muted);padding:7px 12px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.nav-btn:hover{color:var(--text);background:var(--surface2);}
+.nav-btn.active{color:var(--text);}
+.nav-pill{background:var(--text);color:#fff;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;border:none;font-family:'Syne',sans-serif;cursor:pointer;transition:all .15s;}
+.nav-pill:hover{background:#2a2a28;}
+
+/* ─── PAGES ───────────────────────────────────────── */
+.page{display:none;}
+.page.on{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── LAYOUT ──────────────────────────────────────── */
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px;}
+.wrap-sm{max-width:480px;margin:0 auto;padding:40px 20px;}
+.wrap-lg{max-width:1080px;margin:0 auto;padding:40px 20px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:680px){.grid2,.grid3,.grid4{grid-template-columns:1fr;}}
+
+/* ─── TYPOGRAPHY ──────────────────────────────────── */
+h1{font-size:clamp(28px,5vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;}
+h2{font-size:22px;font-weight:800;letter-spacing:-0.4px;}
+h3{font-size:17px;font-weight:700;}
+.muted{color:var(--muted);}
+.mono{font-family:'Space Mono',monospace;}
+
+/* ─── CARD ────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+.card-sm{padding:18px;}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px;}
+
+/* ─── FORM ────────────────────────────────────────── */
+.field{margin-bottom:16px;}
+label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px;}
+input,select,textarea{
+  width:100%;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:8px;padding:10px 13px;color:var(--text);
+  font-family:'Syne',sans-serif;font-size:14px;outline:none;transition:border .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--text);background:var(--surface);}
+input::placeholder,textarea::placeholder{color:var(--border2);}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+
+/* ─── BUTTONS ─────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;transition:all .15s;padding:9px 18px;white-space:nowrap;}
+.btn-full{width:100%;padding:12px;}
+.btn-dark{background:var(--text);color:#fff;}
+.btn-dark:hover{background:#2a2a28;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.15);}
+.btn-light{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-light:hover{background:var(--border);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{opacity:.85;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:hover{opacity:.85;}
+.btn-amber{background:#F5A623;color:#fff;}
+.btn-amber:hover{opacity:.85;}
+.btn-sm{padding:6px 13px;font-size:12px;}
+.btn-xs{padding:4px 10px;font-size:11px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+
+/* ─── BADGE ───────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px;letter-spacing:.2px;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+.badge-gray{background:var(--surface2);color:var(--muted);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);}
+
+/* ─── STAT CARD ───────────────────────────────────── */
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.stat-num{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;line-height:1;margin-bottom:5px;}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);}
+
+/* ─── TABLE ───────────────────────────────────────── */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);background:var(--surface2);}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg);}
+
+/* ─── ALERT ───────────────────────────────────────── */
+.alert{border-radius:8px;padding:12px 15px;font-size:13px;font-weight:600;display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+.alert-info{background:var(--blue-bg);color:var(--blue);border:1px solid #B8CEEC;}
+.alert-success{background:var(--green-bg);color:var(--green);border:1px solid #A8D8BC;}
+.alert-warn{background:var(--amber-bg);color:var(--amber);border:1px solid #E8D090;}
+.alert-error{background:var(--red-bg);color:var(--red);border:1px solid #F0B8B2;}
+
+/* ─── DIVIDER ─────────────────────────────────────── */
+hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ─── TOAST ───────────────────────────────────────── */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 16px;font-size:13px;font-weight:600;min-width:240px;box-shadow:0 4px 20px rgba(0,0,0,.1);display:flex;align-items:center;gap:9px;animation:toastIn .25s ease;pointer-events:all;}
+@keyframes toastIn{from{transform:translateX(105%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.err{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blue);}
+
+/* ─── MODAL ───────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(4px);}
+.modal-bg.on{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;max-width:440px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,.14);animation:fadeUp .2s ease;}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:16px;}
+.modal-footer{display:flex;gap:10px;margin-top:22px;}
+
+/* ─── LOADER ──────────────────────────────────────── */
+#loader{position:fixed;inset:0;background:rgba(245,245,243,.88);display:none;align-items:center;justify-content:center;z-index:800;backdrop-filter:blur(3px);}
+#loader.on{display:flex;}
+.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── TICKET NUMBER BALL ──────────────────────────── */
+.number-ball{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--border);
+  font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
+  color:var(--text);
+}
+.number-ball.winner{background:var(--text);color:#fff;border-color:var(--text);animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ─── LUCKY NUMBERS REVEAL ────────────────────────── */
+.lucky-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:20px 0;}
+.lucky-ball{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;font-size:16px;font-weight:700;
+  color:var(--muted);transition:all .3s;
+}
+.lucky-ball.revealed{background:var(--text);color:#fff;border-color:var(--text);transform:scale(1.08);box-shadow:0 4px 16px rgba(0,0,0,.18);}
+.lucky-ball.match{background:#1A7A4A;color:#fff;border-color:#1A7A4A;transform:scale(1.15);box-shadow:0 6px 20px rgba(26,122,74,.35);animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 6px 20px rgba(26,122,74,.35)}50%{box-shadow:0 6px 30px rgba(26,122,74,.6)}}
+
+/* ─── PROGRESS BAR ────────────────────────────────── */
+.bar-wrap{height:6px;background:var(--surface2);border-radius:50px;overflow:hidden;margin-top:8px;}
+.bar{height:100%;background:var(--text);border-radius:50px;transition:width 1s cubic-bezier(.34,1.56,.64,1);}
+.bar.green{background:var(--green);}
+
+/* ─── ADMIN TABS ──────────────────────────────────── */
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:9px;padding:3px;margin-bottom:24px;border:1px solid var(--border);overflow-x:auto;}
+.tab{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Syne',sans-serif;transition:all .15s;white-space:nowrap;}
+.tab.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow);}
+.tab-panel{display:none;}
+.tab-panel.on{display:block;animation:fadeUp .2s ease;}
+
+/* ─── ACCOUNT DISPLAY ─────────────────────────────── */
+.acct-box{background:var(--bg);border:1.5px dashed var(--border2);border-radius:var(--radius);padding:22px;text-align:center;}
+.acct-num{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;letter-spacing:4px;color:var(--text);margin:6px 0;}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:7px;cursor:pointer;margin-top:10px;transition:all .15s;}
+.copy-btn:hover{background:var(--border);}
+
+/* ─── TICKER ──────────────────────────────────────── */
+.ticker-wrap{overflow:hidden;background:var(--text);color:#fff;padding:10px 0;font-size:12px;font-weight:600;letter-spacing:.3px;}
+.ticker-track{display:flex;gap:48px;white-space:nowrap;animation:tickerMove 30s linear infinite;}
+@keyframes tickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item::before{content:"● ";color:rgba(255,255,255,.4);}
+
+/* ─── GATE ────────────────────────────────────────── */
+.gate-wrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:24px;}
+.gate-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px;max-width:380px;width:100%;box-shadow:var(--shadow);}
+
+/* ─── HOME HERO ───────────────────────────────────── */
+.hero{padding:60px 20px;text-align:center;max-width:620px;margin:0 auto;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:700;padding:5px 14px;border-radius:50px;margin-bottom:22px;}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero p{color:var(--text2);font-size:16px;line-height:1.65;margin:16px 0 32px;font-weight:400;}
+.hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* ─── STEP LIST ───────────────────────────────────── */
+.steps{list-style:none;display:flex;flex-direction:column;gap:12px;}
+.step{display:flex;gap:12px;align-items:flex-start;}
+.step-n{min-width:24px;height:24px;background:var(--text);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;}
+.step-t{font-size:13px;color:var(--text2);line-height:1.55;font-weight:400;}
+
+/* ─── CONFETTI ────────────────────────────────────── */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999;}
+
+@media(max-width:600px){
+  nav{padding:0 16px;}
+  .wrap,.wrap-sm,.wrap-lg{padding:24px 14px;}
+  h1{font-size:26px;}
+  .acct-num{font-size:20px;letter-spacing:2px;}
+}
+</style>
+</head>
+<body>
+
+<!-- CANVAS -->
+<canvas id="confetti"></canvas>
+<!-- TOASTS -->
+<div id="toasts"></div>
+<!-- LOADER -->
+<div id="loader"><div class="spin"></div></div>
+
+<!-- ══════════ NAV ══════════ -->
+<nav>
+  <div class="logo" onclick="goHome()" id="siteLogo">WinSlot <span>NG</span></div>
+  <div class="nav-links">
+    <button class="nav-btn" onclick="goHome()">Home</button>
+    <button class="nav-btn" id="navDashBtn" style="display:none" onclick="navTo('dashboard')">Dashboard</button>
+    <button class="nav-btn" id="navLogoutBtn" style="display:none" onclick="doLogout()">Logout</button>
+    <button class="nav-btn" id="navLoginBtn" onclick="navTo('login')" style="font-weight:700;">Sign In</button>
+    <button class="nav-pill" id="navSignupBtn" onclick="navTo('signup')">Sign Up</button>
+  </div>
+</nav>
+
+<!-- ══════════ TICKER ══════════ -->
+<div class="ticker-wrap" id="tickerWrap" style="display:none;">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: HOME
+══════════════════════════════ -->
+<div class="page on" id="page-home">
+  <div class="hero">
+    <div class="hero-eyebrow"><div class="live-dot"></div> Live Draw Active</div>
+    <h1 id="heroTitle">Win ₦10,000<br>For ₦500</h1>
+    <p id="heroDesc">Buy a ticket, get a unique number. When lucky numbers are announced, check if yours matches — and win ₦10,000.</p>
+    <div class="hero-actions">
+      <button class="btn btn-dark" style="font-size:14px;padding:12px 28px;" onclick="navTo('login')">Get Your Ticket →</button>
+      <button class="btn btn-light" style="font-size:14px;padding:12px 24px;" onclick="navTo('login')">Check My Number</button>
+    </div>
+  </div>
+
+  <!-- Stats strip -->
+  <div style="max-width:700px;margin:0 auto 40px;padding:0 20px;">
+    <div class="grid4" id="homeStats">
+      <div class="stat-card"><div class="stat-num" id="hs-players">—</div><div class="stat-label">Players</div></div>
+      <div class="stat-card"><div class="stat-num" id="hs-tickets">—</div><div class="stat-label">Tickets Sold</div></div>
+      <div class="stat-card"><div class="stat-num">₦500</div><div class="stat-label">Per Ticket</div></div>
+      <div class="stat-card"><div class="stat-num">₦10,000</div><div class="stat-label">Prize</div></div>
+    </div>
+  </div>
+
+  <!-- Lucky numbers public display -->
+  <div style="max-width:600px;margin:0 auto 60px;padding:0 20px;" id="publicDrawSection">
+    <div class="card" style="text-align:center;">
+      <div class="card-title">🎯 Lucky Numbers</div>
+      <div id="publicLuckyNumbers"><p class="muted" style="font-size:14px;padding:12px 0;">Lucky numbers will appear here once the admin announces them.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: LOGIN / REGISTER
+══════════════════════════════ -->
+<div class="page" id="page-login">
+  <div class="gate-wrap">
+    <div class="gate-box">
+      <div style="margin-bottom:24px;">
+        <h2 id="siteLogoLogin">WinSlot NG</h2>
+        <p class="muted" style="font-size:13px;margin-top:5px;">Sign in or create your account</p>
+      </div>      <div class="field"><label>Phone Number</label><input type="text" id="loginPhone" placeholder="080XXXXXXXXXX" autocomplete="off" inputmode="text"></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="Create or enter your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-dark btn-full" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <hr>
+      <p style="font-size:13px;color:var(--muted);text-align:center;">Don't have an account? <button onclick="navTo('signup')" style="background:none;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:underline;">Sign Up</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: DASHBOARD (user)
+══════════════════════════════ -->
+<!-- PAGE: SIGN UP -->
+<div class="page" id="page-signup">
+  <div class="gate-wrap">
+    <div class="gate-box">
+      <div style="margin-bottom:24px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">New Account</div>
+        <h2>Create Account</h2>
+        <p class="muted" style="font-size:13px;margin-top:5px;">Join and get your unique ticket numbers</p>
+      </div>
+      <div class="field"><label>Full Name</label><input type="text" id="signupName" placeholder="e.g. Chiamaka Okafor" autocomplete="name"></div>
+      <div class="field"><label>Phone Number</label><input type="tel" id="signupPhone" placeholder="080XXXXXXXXXX" autocomplete="tel"></div>
+      <div class="field"><label>Password</label><input type="password" id="signupPass" placeholder="Create a password (min 6 chars)"></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="signupPass2" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <button class="btn btn-dark btn-full" id="signupBtn" onclick="doSignup()">Create Account →</button>
+      <hr>
+      <p style="font-size:13px;color:var(--muted);text-align:center;">Already have an account? <button onclick="navTo('login')" style="background:none;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;text-decoration:underline;">Sign In</button></p>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-dashboard">
+  <div class="wrap">
+    <!-- Header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:28px;">
+      <div>
+        <h1 id="dashName" style="font-size:26px;"></h1>
+        <p class="muted" style="font-size:13px;margin-top:3px;" id="dashPhone"></p>
+      </div>
+      <button class="btn btn-dark btn-sm" onclick="openBuyModal()">+ Buy Tickets</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid4" style="margin-bottom:24px;">
+      <div class="stat-card"><div class="stat-num" id="dMyTickets">—</div><div class="stat-label">My Tickets</div></div>
+      <div class="stat-card"><div class="stat-num" id="dActive">—</div><div class="stat-label">Active</div></div>
+      <div class="stat-card"><div class="stat-num" id="dPending">—</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-num" id="dTotalPlayers">—</div><div class="stat-label">Total Players</div></div>
+    </div>
+
+    <div class="grid2">
+      <!-- My ticket numbers -->
+      <div>
+        <div class="card">
+          <div class="card-title">My Ticket Numbers</div>
+          <div id="myTicketNumbers"><p class="muted" style="font-size:13px;">No active tickets yet.</p></div>
+        </div>
+      </div>
+
+      <!-- Lucky numbers & result -->
+      <div>
+        <div class="card">
+          <div class="card-title">🎯 Lucky Numbers Draw</div>
+          <div id="dashLuckyNumbers"><p class="muted" style="font-size:13px;">Admin will announce lucky numbers here. Check if your number matches!</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requests history -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">Payment Requests</div>
+      <div id="dashRequests"><p class="muted" style="font-size:13px;">No requests yet.</p></div>
+    </div>
+
+    <!-- Bank Account Section -->
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">My Bank Account</div>
+          <p style="font-size:12px;color:var(--muted);font-weight:400;">Add your account so admin can pay your winnings directly</p>
+        </div>
+        <button class="btn btn-light btn-sm" id="editBankBtn" onclick="toggleBankEdit()">Edit</button>
+      </div>
+
+      <!-- Display mode -->
+      <div id="bankDisplay">
+        <p class="muted" style="font-size:13px;">No bank account saved yet.</p>
+      </div>
+
+      <!-- Edit mode (hidden by default) -->
+      <div id="bankEditForm" style="display:none;">
+        <div class="grid2" style="gap:14px;">
+          <div class="field" style="margin-bottom:0;">
+            <label>Bank Name</label>
+            <select id="bankNameInp">
+              <option value="">Select bank…</option>
+              <option>Access Bank</option>
+              <option>Ecobank</option>
+              <option>Fidelity Bank</option>
+              <option>First Bank</option>
+              <option>FCMB</option>
+              <option>GTBank</option>
+              <option>Heritage Bank</option>
+              <option>Keystone Bank</option>
+              <option>OPay</option>
+              <option>PalmPay</option>
+              <option>Kuda Bank</option>
+              <option>Moniepoint</option>
+              <option>Polaris Bank</option>
+              <option>Stanbic IBTC</option>
+              <option>Sterling Bank</option>
+              <option>UBA</option>
+              <option>Union Bank</option>
+              <option>Unity Bank</option>
+              <option>Wema Bank</option>
+              <option>Zenith Bank</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Account Number</label>
+            <input type="text" id="bankAcctNumInp" placeholder="0000000000" maxlength="10">
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label>Account Name</label>
+          <input type="text" id="bankAcctNameInp" placeholder="e.g. Chiamaka Okafor">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-dark btn-sm" onclick="saveBankAccount()">Save Account</button>
+          <button class="btn btn-light btn-sm" onclick="toggleBankEdit()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: ADMIN PANEL
+══════════════════════════════ -->
+<div class="page" id="page-admin">
+  <div class="wrap-lg">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:28px;">
+      <div>
+        <h1 style="font-size:26px;">Admin Panel</h1>
+        <p class="muted" style="font-size:13px;margin-top:3px;">WinSlot NG — Control</p>
+      </div>
+      <button class="btn btn-light btn-sm" onclick="doAdminLogout()">Exit Admin</button>
+    </div>
+
+    <!-- Overview -->
+    <div class="grid4" id="adminOv" style="margin-bottom:24px;"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab on" onclick="aTab('payments',this)">Payments</button>
+      <button class="tab" onclick="aTab('players',this)">Players</button>
+      <button class="tab" onclick="aTab('draw',this)">Draw Numbers</button>
+      <button class="tab" onclick="aTab('settings',this)">Settings</button>
+    </div>
+
+    <!-- Payments -->
+    <div class="tab-panel on" id="tp-payments"><div id="reqTable"></div></div>
+
+    <!-- Players -->
+    <div class="tab-panel" id="tp-players"><div id="playTable"></div></div>
+
+    <!-- Draw Numbers -->
+    <div class="tab-panel" id="tp-draw">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Announce Lucky Numbers</div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">Enter up to 5 lucky numbers below. Once you save and announce, they'll show live on the site and in all player dashboards.</p>
+          <div class="field"><label>Lucky Number 1</label><input type="number" id="ln1" placeholder="e.g. 142" min="1" max="9999"></div>
+          <div class="field"><label>Lucky Number 2</label><input type="number" id="ln2" placeholder="e.g. 378" min="1" max="9999"></div>
+          <div class="field"><label>Lucky Number 3</label><input type="number" id="ln3" placeholder="e.g. 521" min="1" max="9999"></div>
+          <div class="field"><label>Lucky Number 4</label><input type="number" id="ln4" placeholder="e.g. 604" min="1" max="9999"></div>
+          <div class="field"><label>Lucky Number 5</label><input type="number" id="ln5" placeholder="e.g. 899" min="1" max="9999"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-dark" onclick="saveLuckyNumbers()">📢 Announce Numbers</button>
+            <button class="btn btn-light" onclick="clearLuckyNumbers()">Clear</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Currently Announced</div>
+          <div id="adminCurrentLucky"><p class="muted" style="font-size:13px;">No numbers announced yet.</p></div>
+          <div style="margin-top:16px;" id="winnerList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tab-panel" id="tp-settings">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Site Branding</div>
+          <div class="field"><label>Site Name</label><input type="text" id="siteNameInp" placeholder="e.g. WinSlot NG"></div>
+          <div class="field"><label>Hero Title</label><input type="text" id="heroTitleInp" placeholder="e.g. Win ₦10,000 For ₦500"></div>
+          <div class="field"><label>Hero Description</label><textarea id="heroDescInp" rows="3" placeholder="Short description on homepage…"></textarea></div>
+          <button class="btn btn-dark btn-sm" onclick="saveBranding()">Save Branding</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Player Count Display</div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6;">Override the player count shown on the homepage and dashboard to create social proof. Real count is used if set to 0.</p>
+          <div class="field"><label>Display Player Count</label><input type="number" id="fakePlayersInp" placeholder="e.g. 250" min="0"></div>
+          <button class="btn btn-dark btn-sm" onclick="saveFakePlayers()">Save</button>
+        </div>
+        <div class="card">
+          <div class="card-title">OPay Account Details</div>
+          <div class="field"><label>Account Number</label><input type="text" id="acctNumInp" placeholder="e.g. 9071456164"></div>
+          <div class="field"><label>Account Name</label><input type="text" id="acctNameInp" placeholder="e.g. Susan Omoruyi"></div>
+          <button class="btn btn-dark btn-sm" onclick="saveAcct()">Save</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Admin Password</div>
+          <div class="field"><label>New Password (min 8 chars)</label><input type="password" id="newAdminPwd" placeholder="••••••••"></div>
+          <button class="btn btn-dark btn-sm" onclick="changeAdminPwd()">Update Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: BUY TICKETS
+══════════════════════════════ -->
+<div class="modal-bg" id="buyModal">
+  <div class="modal">
+    <h3>Buy Tickets</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Each ticket costs ₦500. You'll get a unique number per ticket. When lucky numbers are announced, check if yours matches!</p>
+
+    <div class="acct-box" style="margin-bottom:18px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Transfer To</div>
+      <div class="acct-num" id="modalAcctNum">9071456164</div>
+      <div style="font-weight:700;font-size:15px;" id="modalAcctName">Susan Omoruyi</div>
+      <div style="font-size:12px;color:var(--muted);">OPay</div>
+      <button class="copy-btn" onclick="copyAcct()">📋 Copy Number</button>
+    </div>
+
+    <div class="field">
+      <label>Number of Tickets</label>
+      <div style="display:flex;align-items:center;gap:0;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;">
+        <button style="width:40px;height:40px;background:none;border:none;font-size:18px;font-weight:700;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="adjQ(-1)">−</button>
+        <span class="mono" style="min-width:44px;text-align:center;font-size:18px;font-weight:700;" id="qtyVal">1</span>
+        <button style="width:40px;height:40px;background:none;border:none;font-size:18px;font-weight:700;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="adjQ(1)">+</button>
+      </div>
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:3px 0;"><span>Per ticket</span><span>₦500</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:3px 0;"><span>Quantity</span><span id="modalQtyLine">1</span></div>
+      <hr style="margin:10px 0;">
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding:3px 0;"><span>Total</span><span id="modalTotal">₦500</span></div>
+    </div>
+
+    <div class="field"><label>Payment Reference / Name</label><input type="text" id="buyRef" placeholder="e.g. John — raffle ticket"></div>
+    <div class="field"><label>Proof Screenshot (optional)</label><input type="file" id="buyProof" accept="image/*" style="font-size:13px;"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-dark" style="flex:1;" id="buySubmitBtn" onclick="submitBuy()">Submit Request 🚀</button>
+      <button class="btn btn-light" onclick="closeBuyModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     JAVASCRIPT
+══════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────
+   🔧 SUPABASE CONFIG — replace these two values
+───────────────────────────────────────────────── */
+const SB_URL  = 'https://ecmyusuaebigcnujpceh.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbXl1c3VhZWJpZ2NudWpwY2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMjczNjAsImV4cCI6MjA4ODcwMzM2MH0.XbEMocQ5SyRUekGY2RVw79toHrnoMWmQfJ-wol3tn7c';
+/* ─────────────────────────────────────────────── */
+
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+/* ── State ── */
+let me      = null;   // logged-in user row
+let isAdmin = false;
+let qty     = 1;
+let siteSettings = {}; // cached settings
+let animRaf;
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+async function init() {
+  await loadSettings();
+  applyBranding();
+  loadHomeStats();
+  loadPublicLucky();
+  startRealtime();
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════ */
+async function loadSettings() {
+  const { data } = await sb.from('settings').select('*');
+  if (data) data.forEach(r => siteSettings[r.key] = r.value);
+}
+
+async function getSetting(key, fallback='') {
+  return siteSettings[key] ?? fallback;
+}
+
+function applyBranding() {
+  const name  = siteSettings['site_name']  || 'WinSlot NG';
+  const title = siteSettings['hero_title'] || 'Win ₦10,000<br>For ₦500';
+  const desc  = siteSettings['hero_desc']  || 'Buy a ticket, get a unique number. When lucky numbers are announced, check if yours matches — and win ₦10,000.';
+  const acctNum  = siteSettings['acct_num']  || '9071456164';
+  const acctName = siteSettings['acct_name'] || 'Susan Omoruyi';
+
+  document.title = name;
+  document.getElementById('siteLogo').innerHTML = name.replace(/(\s)(\S+)$/, ' <span>$2</span>');
+  document.getElementById('siteLogoLogin').textContent = name;
+  document.getElementById('heroTitle').innerHTML = title;
+  document.getElementById('heroDesc').textContent = desc;
+  document.getElementById('modalAcctNum').textContent = acctNum;
+  document.getElementById('modalAcctName').textContent = acctName;
+}
+
+/* ══════════════════════════════════════════
+   NAV
+══════════════════════════════════════════ */
+function navTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  window.scrollTo(0,0);
+  if (id === 'dashboard' && me) loadDashboard();
+  if (id === 'admin')           loadAdmin();
+}
+
+function goHome() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('page-home').classList.add('on');
+  loadHomeStats();
+  loadPublicLucky();
+  window.scrollTo(0,0);
+}
+
+function updateNav() {
+  const loggedIn = !!me;
+  document.getElementById('navLoginBtn').style.display  = loggedIn ? 'none' : '';
+  document.getElementById('navSignupBtn').style.display = loggedIn ? 'none' : '';
+  document.getElementById('navDashBtn').style.display   = loggedIn ? ''     : 'none';
+  document.getElementById('navLogoutBtn').style.display = loggedIn ? ''     : 'none';
+}
+
+/* ══════════════════════════════════════════
+   HOME STATS
+══════════════════════════════════════════ */
+async function loadHomeStats() {
+  const [{ data: tickets }, { data: users }] = await Promise.all([
+    sb.from('tickets').select('id').eq('active', true),
+    sb.from('users').select('id')
+  ]);
+  const realPlayers  = (users  || []).length;
+  const realTickets  = (tickets|| []).length;
+  const fakePlayers  = parseInt(siteSettings['fake_players'] || '0');
+  const displayCount = fakePlayers > 0 ? fakePlayers : realPlayers;
+
+  document.getElementById('hs-players').textContent = displayCount;
+  document.getElementById('hs-tickets').textContent = realTickets;
+
+  // Build ticker
+  if (realTickets > 0) {
+    const ids = [...new Set((tickets||[]).map(t=>t.id))].slice(0,20);
+    const { data: ut } = await sb.from('tickets').select('number,users(name)').eq('active',true).limit(20);
+    if (ut && ut.length > 0) {
+      const items = ut.map(t => `${t.users?.name||'A player'} holds ticket #${t.number}`);
+      const doubled = [...items,...items].map(i=>`<span class="ticker-item">${i}</span>`).join('');
+      document.getElementById('tickerTrack').innerHTML = doubled;
+      document.getElementById('tickerWrap').style.display = '';
+    }
+  }
+}
+
+/* ══════════════════════════════════════════
+   PUBLIC LUCKY NUMBERS
+══════════════════════════════════════════ */
+async function loadPublicLucky() {
+  const lucky = await getLuckyNumbers();
+  renderPublicLucky(lucky);
+}
+
+async function getLuckyNumbers() {
+  const { data } = await sb.from('settings').select('value').eq('key','lucky_numbers').single();
+  if (!data || !data.value) return [];
+  try { return JSON.parse(data.value); } catch { return []; }
+}
+
+function renderPublicLucky(nums) {
+  const el = document.getElementById('publicLuckyNumbers');
+  if (!nums || nums.length === 0) {
+    el.innerHTML = '<p class="muted" style="font-size:14px;padding:12px 0;">Lucky numbers will appear here once the admin announces them.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">These are today's lucky numbers. If you hold a ticket with any of these numbers, you win ₦10,000!</p>
+    <div class="lucky-grid">${nums.map(n=>`<div class="lucky-ball revealed">${n}</div>`).join('')}</div>
+  `;
+}
+
+/* ══════════════════════════════════════════
+   LOGIN / LOGOUT
+══════════════════════════════════════════ */
+async function doLogin() {
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+
+  if (!phone || !pass) { toast('Phone and password are required','err'); return; }
+
+  // Admin check FIRST — 'admin' as phone bypasses number validation
+  if (phone.toLowerCase() === 'admin') {
+    const adminPwd = siteSettings['admin_pass'] || 'admin@Admin';
+    if (pass === adminPwd) {
+      isAdmin = true;
+      document.getElementById('loginPhone').value = '';
+      document.getElementById('loginPass').value  = '';
+      toast('Admin access granted 🔓','ok');
+      navTo('admin');
+      return;
+    } else {
+      toast('Incorrect admin password','err');
+      return;
+    }
+  }
+
+  if (!/^0\d{10}$/.test(phone)) { toast('Enter a valid 11-digit Nigerian phone number','err'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin" style="width:16px;height:16px;border-width:2px;"></span> Signing in…';
+
+  const { data: existing } = await sb.from('users').select('id,name,phone,pass_hash,bank_name,bank_acct_num,bank_acct_name,created_at').eq('phone', phone).single();
+
+  if (!existing) {
+    toast('No account found. Please sign up first.','err');
+    btn.disabled=false; btn.textContent='Sign In →'; return;
+  }
+
+  if (existing.pass_hash !== hashPass(pass)) {
+    toast('Incorrect password. Try again.','err');
+    btn.disabled=false; btn.textContent='Sign In →'; return;
+  }
+
+  me = existing;
+  updateNav();
+  toast('Welcome back, '+me.name+'! 👋','ok');
+  btn.disabled=false; btn.textContent='Sign In →';
+  document.getElementById('loginPhone').value='';
+  document.getElementById('loginPass').value='';
+  navTo('dashboard');
+}
+
+function doLogout() { me=null; updateNav(); goHome(); }
+function doAdminLogout() { isAdmin=false; goHome(); }
+
+/* ══════════════════════════════════════════
+   SIGN UP
+══════════════════════════════════════════ */
+async function doSignup() {
+  const name  = document.getElementById('signupName').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const pass  = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPass2').value;
+
+  if (!name)  { toast('Please enter your full name','err'); return; }
+  if (!phone) { toast('Please enter your phone number','err'); return; }
+  if (!/^0\d{10}$/.test(phone)) { toast('Enter a valid 11-digit Nigerian phone number','err'); return; }
+  if (!pass)  { toast('Please create a password','err'); return; }
+  if (pass.length < 6) { toast('Password must be at least 6 characters','err'); return; }
+  if (pass !== pass2) { toast('Passwords do not match','err'); return; }
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin" style="width:16px;height:16px;border-width:2px;"></span> Creating account…';
+
+  const { data: existing } = await sb.from('users').select('id').eq('phone', phone).single();
+  if (existing) {
+    toast('An account with this phone already exists. Please sign in.','err');
+    btn.disabled=false; btn.textContent='Create Account →'; return;
+  }
+
+  const { data: newUser, error } = await sb.from('users')
+    .insert({ name, phone, pass_hash: hashPass(pass) })
+    .select().single();
+
+  if (error) { toast('Error: '+error.message,'err'); btn.disabled=false; btn.textContent='Create Account →'; return; }
+
+  me = newUser;
+  updateNav();
+  toast('Welcome to '+(siteSettings['site_name']||'WinSlot NG')+', '+name+'! 🎉','ok');
+  btn.disabled=false; btn.textContent='Create Account →';
+  navTo('dashboard');
+}
+
+function hashPass(p) {
+  // Simple deterministic hash — good enough for this use case
+  let h = 0;
+  for (let i=0;i<p.length;i++) { h = Math.imul(31,h)+p.charCodeAt(i)|0; }
+  return h.toString(36);
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+async function loadDashboard() {
+  if (!me) return;
+  load('Loading your dashboard…');
+
+  const [{ data: myReqs }, { data: myTickets }, { data: allUsers }] = await Promise.all([
+    sb.from('requests').select('*').eq('user_id', me.id).order('created_at',{ascending:false}),
+    sb.from('tickets').select('*').eq('user_id', me.id).order('created_at',{ascending:false}),
+    sb.from('users').select('id')
+  ]);
+
+  const lucky = await getLuckyNumbers();
+  unload();
+
+  // Load bank account details
+  loadBankAccount();
+
+  const active  = (myTickets||[]).filter(t=>t.active);
+  const pending = (myReqs||[]).filter(r=>r.status==='pending').reduce((s,r)=>s+r.tickets,0);
+  const fakePlayers  = parseInt(siteSettings['fake_players'] || '0');
+  const totalPlayers = fakePlayers > 0 ? fakePlayers : (allUsers||[]).length;
+
+  document.getElementById('dashName').textContent  = 'Hey, '+me.name;
+  document.getElementById('dashPhone').textContent = me.phone;
+  document.getElementById('dMyTickets').textContent = (myTickets||[]).length;
+  document.getElementById('dActive').textContent    = active.length;
+  document.getElementById('dPending').textContent   = pending;
+  document.getElementById('dTotalPlayers').textContent = totalPlayers;
+
+  // My ticket numbers
+  const tnEl = document.getElementById('myTicketNumbers');
+  if (active.length === 0) {
+    tnEl.innerHTML = '<p class="muted" style="font-size:13px;">No active tickets yet. Buy tickets to get your unique numbers.</p>';
+  } else {
+    tnEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px;">'+
+      active.map(t => {
+        const isWinner = lucky.includes(parseInt(t.number)) || lucky.includes(t.number);
+        return `<div class="number-ball ${isWinner?'winner':''}" title="Ticket #${t.number}">${t.number}</div>`;
+      }).join('')+'</div>';
+    if (lucky.length > 0) {
+      const myWins = active.filter(t => lucky.includes(parseInt(t.number)) || lucky.includes(t.number));
+      if (myWins.length > 0) {
+        tnEl.innerHTML += `<div class="alert alert-success" style="margin-top:14px;">🎉 Congratulations! Your number${myWins.length>1?'s':''} <strong>${myWins.map(t=>t.number).join(', ')}</strong> match${myWins.length===1?'es':''} a lucky number! You win ₦10,000!</div>`;
+      }
+    }
+  }
+
+  // Lucky numbers on dashboard
+  const lnEl = document.getElementById('dashLuckyNumbers');
+  if (lucky.length === 0) {
+    lnEl.innerHTML = '<p class="muted" style="font-size:13px;">Waiting for admin to announce lucky numbers…</p>';
+  } else {
+    const myNums = active.map(t => parseInt(t.number)||t.number);
+    lnEl.innerHTML = '<div class="lucky-grid" style="justify-content:flex-start;">'+
+      lucky.map(n => {
+        const match = myNums.includes(parseInt(n))||myNums.includes(n);
+        return `<div class="lucky-ball revealed ${match?'match':''}">${n}</div>`;
+      }).join('')+'</div>';
+    if (!active.length) lnEl.innerHTML += '<p class="muted" style="font-size:12px;margin-top:10px;">Buy tickets to see if you match!</p>';
+  }
+
+  // Requests
+  const rqEl = document.getElementById('dashRequests');
+  if (!myReqs || myReqs.length===0) {
+    rqEl.innerHTML = '<p class="muted" style="font-size:13px;">No requests yet. <button class="btn btn-dark btn-xs" style="margin-left:8px;" onclick="openBuyModal()">Buy Tickets</button></p>';
+  } else {
+    rqEl.innerHTML = myReqs.map(r => {
+      const bc = r.status==='verified'?'badge-green':r.status==='rejected'?'badge-red':'badge-amber';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-weight:700;font-size:14px;">${r.tickets} Ticket${r.tickets>1?'s':''} — ₦${r.amount.toLocaleString()}</div>
+          <div style="font-size:12px;color:var(--muted);">${new Date(r.created_at).toLocaleString()}${r.note?'  ·  '+r.note:''}</div>
+        </div>
+        <span class="badge ${bc}">${r.status}</span>
+      </div>`;
+    }).join('') || '<p class="muted" style="font-size:13px;">No requests.</p>';
+  }
+}
+
+/* ══════════════════════════════════════════
+   BUY MODAL
+══════════════════════════════════════════ */
+function openBuyModal() {
+  if (!me) { navTo('login'); return; }
+  qty=1; updateQty();
+  document.getElementById('buyRef').value='';
+  document.getElementById('buyModal').classList.add('on');
+}
+function closeBuyModal() { document.getElementById('buyModal').classList.remove('on'); }
+function adjQ(d) { qty=Math.max(1,Math.min(50,qty+d)); updateQty(); }
+function updateQty() {
+  document.getElementById('qtyVal').textContent=qty;
+  document.getElementById('modalQtyLine').textContent=qty;
+  document.getElementById('modalTotal').textContent='₦'+(qty*500).toLocaleString();
+}
+function copyAcct() {
+  const n = document.getElementById('modalAcctNum').textContent;
+  navigator.clipboard.writeText(n).then(()=>toast('Account number copied 📋','ok')).catch(()=>{});
+}
+
+async function submitBuy() {
+  const ref = document.getElementById('buyRef').value.trim();
+  const btn = document.getElementById('buySubmitBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin" style="width:15px;height:15px;border-width:2px;"></span> Submitting…';
+
+  const { error } = await sb.from('requests').insert({
+    user_id: me.id, name: me.name, phone: me.phone,
+    tickets: qty, amount: qty*500,
+    status: 'pending', ref: ref||null
+  });
+
+  btn.disabled=false; btn.textContent='Submit Request 🚀';
+  if (error) { toast('Error: '+error.message,'err'); return; }
+  toast(`Request submitted! ${qty} ticket(s) pending verification.`,'ok');
+  closeBuyModal();
+  loadDashboard();
+}
+
+/* ══════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════ */
+async function loadAdmin() {
+  if (!isAdmin) return;
+  load('Loading admin panel…');
+
+  const [{ data: tickets }, { data: requests }, { data: users }] = await Promise.all([
+    sb.from('tickets').select('*').eq('active',true),
+    sb.from('requests').select('*').order('created_at',{ascending:false}),
+    sb.from('users').select('id,name,phone,bank_name,bank_acct_num,bank_acct_name,created_at')
+  ]);
+
+  unload();
+
+  const revenue = (requests||[]).filter(r=>r.status==='verified').reduce((s,r)=>s+r.amount,0);
+  document.getElementById('adminOv').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${(users||[]).length}</div><div class="stat-label">Real Players</div></div>
+    <div class="stat-card"><div class="stat-num">${(tickets||[]).length}</div><div class="stat-label">Active Tickets</div></div>
+    <div class="stat-card"><div class="stat-num">${(requests||[]).filter(r=>r.status==='pending').length}</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-num">₦${revenue.toLocaleString()}</div><div class="stat-label">Revenue</div></div>
+  `;
+
+  renderReqTable(requests||[], tickets||[]);
+  renderPlayTable(users||[], tickets||[]);
+  renderAdminLucky();
+  renderAdminWinners(tickets||[]);
+  loadSettingsForm();
+}
+
+function renderReqTable(reqs, tickets) {
+  const el = document.getElementById('reqTable');
+  if (!reqs.length) { el.innerHTML='<div class="alert alert-info">No payment requests yet.</div>'; return; }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Player</th><th>Tickets</th><th>Amount</th><th>Reference</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody>${reqs.map(r=>{
+      const bc = r.status==='verified'?'badge-green':r.status==='rejected'?'badge-red':'badge-amber';
+      return `<tr>
+        <td><strong>${r.name}</strong><br><span class="muted" style="font-size:11px;">${r.phone}</span></td>
+        <td>${r.tickets}</td>
+        <td>₦${r.amount.toLocaleString()}</td>
+        <td style="font-size:12px;color:var(--muted);">${r.ref||'—'}</td>
+        <td><span class="badge ${bc}">${r.status}</span></td>
+        <td style="font-size:11px;color:var(--muted);">${new Date(r.created_at).toLocaleString()}</td>
+        <td>${r.status==='pending'
+          ?`<button class="btn btn-green btn-xs" onclick="verifyReq('${r.id}','${r.user_id}',${r.tickets})">✓</button> <button class="btn btn-red btn-xs" onclick="rejectReq('${r.id}','${r.name}')">✗</button>`
+          :`<span style="font-size:11px;color:var(--muted);">${r.note||'—'}</span>`}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderPlayTable(users, tickets) {
+  const el = document.getElementById('playTable');
+  if (!users.length) { el.innerHTML='<div class="alert alert-info">No players yet.</div>'; return; }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Active Tickets</th><th>Numbers</th><th>Bank Account</th><th>Joined</th></tr></thead>
+    <tbody>${users.map(u=>{
+      const ut = tickets.filter(t=>t.user_id===u.id && t.active);
+      const bankInfo = u.bank_acct_num
+        ? `<div style="font-weight:700;font-size:12px;">${u.bank_acct_name||'—'}</div>
+           <div class="mono" style="font-size:11px;color:var(--text2);">${u.bank_acct_num}</div>
+           <div style="font-size:11px;color:var(--muted);">${u.bank_name||''}</div>`
+        : '<span style="font-size:11px;color:var(--muted);">Not added</span>';
+      return `<tr>
+        <td><strong>${u.name}</strong></td>
+        <td class="mono" style="font-size:12px;">${u.phone}</td>
+        <td>${ut.length}</td>
+        <td class="mono" style="font-size:11px;">${ut.map(t=>t.number).join(', ')||'—'}</td>
+        <td>${bankInfo}</td>
+        <td style="font-size:11px;color:var(--muted);">${new Date(u.created_at).toLocaleString()}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+async function verifyReq(reqId, userId, qty) {
+  load(`Activating ${qty} ticket(s)…`);
+  const { data: allT } = await sb.from('tickets').select('number');
+  const used = new Set((allT||[]).map(t=>parseInt(t.number)));
+  const nums = [];
+  while (nums.length < qty) {
+    const n = Math.floor(100+Math.random()*900); // 3-digit numbers (100-999)
+    if (!used.has(n) && !nums.includes(n)) nums.push(n);
+  }
+  await sb.from('tickets').insert(nums.map(n=>({user_id:userId,request_id:reqId,number:String(n),active:true})));
+  await sb.from('requests').update({status:'verified',note:'Verified by admin'}).eq('id',reqId);
+  unload();
+  toast(`${qty} ticket${qty>1?'s':''} activated ✅`,'ok');
+  loadAdmin();
+}
+
+async function rejectReq(reqId, name) {
+  await sb.from('requests').update({status:'rejected',note:'Payment not confirmed'}).eq('id',reqId);
+  toast(`${name}'s request rejected`,'err');
+  loadAdmin();
+}
+
+/* ── LUCKY NUMBERS ADMIN ── */
+async function renderAdminLucky() {
+  const lucky = await getLuckyNumbers();
+  const el = document.getElementById('adminCurrentLucky');
+  if (!lucky || !lucky.length) {
+    el.innerHTML = '<p class="muted" style="font-size:13px;">No numbers announced yet.</p>';
+    // populate inputs if they were saved
+    return;
+  }
+  el.innerHTML = `<div class="lucky-grid" style="justify-content:flex-start;">${lucky.map(n=>`<div class="lucky-ball revealed">${n}</div>`).join('')}</div>`;
+  // Fill input fields
+  ['ln1','ln2','ln3','ln4','ln5'].forEach((id,i) => {
+    const inp = document.getElementById(id);
+    if (inp) inp.value = lucky[i] !== undefined ? lucky[i] : '';
+  });
+}
+
+async function renderAdminWinners(tickets) {
+  const lucky = await getLuckyNumbers();
+  const el = document.getElementById('winnerList');
+  if (!lucky||!lucky.length||!tickets.length) { el.innerHTML=''; return; }
+  const winners = tickets.filter(t => lucky.includes(parseInt(t.number)) || lucky.includes(t.number));
+  if (!winners.length) { el.innerHTML='<p class="muted" style="font-size:12px;">No matching tickets for current lucky numbers.</p>'; return; }
+  const { data: users } = await sb.from('users').select('id,name,phone').in('id', winners.map(t=>t.user_id));
+  el.innerHTML = '<div style="margin-top:4px;"><div class="card-title" style="margin-bottom:10px;">🏆 Winners</div>'+
+    winners.map(t=>{
+      const u = (users||[]).find(u=>u.id===t.user_id);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;">
+        <div><strong>${u?.name||'Unknown'}</strong><br><span class="muted" style="font-size:11px;">${u?.phone||''}</span></div>
+        <span class="badge badge-green mono">#${t.number}</span>
+      </div>`;
+    }).join('')+'</div>';
+}
+
+async function saveLuckyNumbers() {
+  const vals = ['ln1','ln2','ln3','ln4','ln5']
+    .map(id => document.getElementById(id).value.trim())
+    .filter(v => v !== '' && !isNaN(v))
+    .map(v => parseInt(v));
+  if (!vals.length) { toast('Enter at least one lucky number','err'); return; }
+  await sb.from('settings').upsert({key:'lucky_numbers', value: JSON.stringify(vals)});
+  siteSettings['lucky_numbers'] = JSON.stringify(vals);
+  toast(`📢 ${vals.length} lucky number${vals.length>1?'s':''} announced!`,'ok');
+  renderAdminLucky();
+  loadAdmin();
+}
+
+async function clearLuckyNumbers() {
+  await sb.from('settings').upsert({key:'lucky_numbers',value:'[]'});
+  siteSettings['lucky_numbers'] = '[]';
+  ['ln1','ln2','ln3','ln4','ln5'].forEach(id => document.getElementById(id).value='');
+  toast('Lucky numbers cleared','info');
+  renderAdminLucky();
+}
+
+/* ── SETTINGS FORM ── */
+async function loadSettingsForm() {
+  document.getElementById('siteNameInp').value  = siteSettings['site_name']   || 'WinSlot NG';
+  document.getElementById('heroTitleInp').value  = siteSettings['hero_title']  || 'Win ₦10,000 For ₦500';
+  document.getElementById('heroDescInp').value   = siteSettings['hero_desc']   || '';
+  document.getElementById('fakePlayersInp').value= siteSettings['fake_players']|| '0';
+  document.getElementById('acctNumInp').value    = siteSettings['acct_num']    || '9071456164';
+  document.getElementById('acctNameInp').value   = siteSettings['acct_name']   || 'Susan Omoruyi';
+}
+
+async function saveBranding() {
+  const name  = document.getElementById('siteNameInp').value.trim();
+  const title = document.getElementById('heroTitleInp').value.trim();
+  const desc  = document.getElementById('heroDescInp').value.trim();
+  const upserts = [
+    {key:'site_name',  value:name||'WinSlot NG'},
+    {key:'hero_title', value:title},
+    {key:'hero_desc',  value:desc},
+  ];
+  for (const u of upserts) {
+    await sb.from('settings').upsert(u);
+    siteSettings[u.key] = u.value;
+  }
+  applyBranding();
+  toast('Branding updated ✅','ok');
+}
+
+async function saveFakePlayers() {
+  const val = document.getElementById('fakePlayersInp').value||'0';
+  await sb.from('settings').upsert({key:'fake_players',value:val});
+  siteSettings['fake_players'] = val;
+  toast('Player display count saved ✅','ok');
+}
+
+async function saveAcct() {
+  const num  = document.getElementById('acctNumInp').value.trim();
+  const name = document.getElementById('acctNameInp').value.trim();
+  await sb.from('settings').upsert({key:'acct_num',value:num});
+  await sb.from('settings').upsert({key:'acct_name',value:name});
+  siteSettings['acct_num']  = num;
+  siteSettings['acct_name'] = name;
+  applyBranding();
+  toast('Account details saved ✅','ok');
+}
+
+async function changeAdminPwd() {
+  const val = document.getElementById('newAdminPwd').value.trim();
+  if (!val || val.length < 8) { toast('Min 8 characters','err'); return; }
+  await sb.from('settings').upsert({key:'admin_pass',value:val});
+  siteSettings['admin_pass'] = val;
+  document.getElementById('newAdminPwd').value = '';
+  toast('Admin password updated ✅','ok');
+}
+
+/* ══════════════════════════════════════════
+   ADMIN TABS
+══════════════════════════════════════════ */
+function aTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('tp-'+id).classList.add('on');
+  if (id==='settings') loadSettingsForm();
+}
+
+/* ══════════════════════════════════════════
+   REALTIME
+══════════════════════════════════════════ */
+function startRealtime() {
+  sb.channel('winslot')
+    .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},()=>{
+      loadHomeStats();
+      if (me) loadDashboard();
+      if (isAdmin) loadAdmin();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'requests'},()=>{
+      if (me) loadDashboard();
+      if (isAdmin) loadAdmin();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'settings'},async ()=>{
+      await loadSettings();
+      applyBranding();
+      loadPublicLucky();
+      if (me) loadDashboard();
+    })
+    .subscribe();
+}
+
+/* ══════════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════════ */
+function confetti() {
+  const c=document.getElementById('confetti'),ctx=c.getContext('2d');
+  c.width=window.innerWidth; c.height=window.innerHeight;
+  const cols=['#111110','#F5A623','#1A7A4A','#C0392B','#888882','#fff'];
+  const p=Array.from({length:90},()=>({x:Math.random()*c.width,y:Math.random()*c.height-c.height,r:Math.random()*6+3,d:Math.random()*40+20,col:cols[Math.floor(Math.random()*cols.length)],ta:0,tai:Math.random()*.07+.04}));
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    p.forEach(q=>{ctx.beginPath();ctx.lineWidth=q.r/2;ctx.strokeStyle=q.col;ctx.moveTo(q.x+q.ta+q.r/4,q.y);ctx.lineTo(q.x+q.ta,q.y+q.ta+q.r/4);ctx.stroke();q.ta+=q.tai;q.y+=(Math.cos(t*.01+q.d)+1)*2;q.x+=Math.sin(t*.01)*1.2;if(q.y>c.height){q.y=-10;q.x=Math.random()*c.width;}});
+    t++;
+    if(t<260)animRaf=requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,c.width,c.height);
+  }
+  cancelAnimationFrame(animRaf); draw();
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+function load(txt='Loading…'){
+  document.getElementById('loader').classList.add('on');
+  document.getElementById('loader').querySelector('.spin').nextSibling;
+}
+function unload(){document.getElementById('loader').classList.remove('on');}
+
+function toast(msg,type='ok'){
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  el.innerHTML=`<span>${type==='ok'?'✅':type==='err'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.transition='all .3s';el.style.opacity='0';el.style.transform='translateX(110%)';setTimeout(()=>el.remove(),300);},3500);
+}
+
+// Close modal on overlay click
+document.getElementById('buyModal').addEventListener('click',function(e){if(e.target===this)closeBuyModal();});
+
+/* ══════════════════════════════════════════
+   BANK ACCOUNT
+══════════════════════════════════════════ */
+async function loadBankAccount() {
+  if (!me) return;
+  const { data } = await sb.from('users').select('bank_name,bank_acct_num,bank_acct_name').eq('id', me.id).single();
+  const el = document.getElementById('bankDisplay');
+  if (!el) return;
+
+  if (!data || !data.bank_acct_num) {
+    el.innerHTML = '<p class="muted" style="font-size:13px;">No bank account saved yet. Click <strong>Edit</strong> to add your account details.</p>';
+    return;
+  }
+
+  // Update local me cache
+  me.bank_name      = data.bank_name;
+  me.bank_acct_num  = data.bank_acct_num;
+  me.bank_acct_name = data.bank_acct_name;
+
+  el.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="width:40px;height:40px;background:var(--text);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🏦</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:15px;">${data.bank_acct_name}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:14px;color:var(--text2);margin-top:2px;">${data.bank_acct_num}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${data.bank_name}</div>
+      </div>
+      <span class="badge badge-green">Saved ✓</span>
+    </div>`;
+}
+
+function toggleBankEdit() {
+  const form    = document.getElementById('bankEditForm');
+  const display = document.getElementById('bankDisplay');
+  const btn     = document.getElementById('editBankBtn');
+  const isOpen  = form.style.display !== 'none';
+
+  if (isOpen) {
+    form.style.display    = 'none';
+    display.style.display = '';
+    btn.textContent       = 'Edit';
+  } else {
+    form.style.display    = 'block';
+    display.style.display = 'none';
+    btn.textContent       = 'Cancel';
+    // Pre-fill if data exists
+    if (me.bank_name)      document.getElementById('bankNameInp').value     = me.bank_name;
+    if (me.bank_acct_num)  document.getElementById('bankAcctNumInp').value  = me.bank_acct_num;
+    if (me.bank_acct_name) document.getElementById('bankAcctNameInp').value = me.bank_acct_name;
+  }
+}
+
+async function saveBankAccount() {
+  const bank_name      = document.getElementById('bankNameInp').value.trim();
+  const bank_acct_num  = document.getElementById('bankAcctNumInp').value.trim();
+  const bank_acct_name = document.getElementById('bankAcctNameInp').value.trim();
+
+  if (!bank_name)      { toast('Please select your bank','err'); return; }
+  if (!bank_acct_num)  { toast('Please enter your account number','err'); return; }
+  if (!/^\d{10}$/.test(bank_acct_num)) { toast('Account number must be exactly 10 digits','err'); return; }
+  if (!bank_acct_name) { toast('Please enter your account name','err'); return; }
+
+  const btn = document.querySelector('#bankEditForm .btn-dark');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const { error } = await sb.from('users').update({ bank_name, bank_acct_num, bank_acct_name }).eq('id', me.id);
+
+  btn.disabled = false; btn.textContent = 'Save Account';
+
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+
+  me.bank_name      = bank_name;
+  me.bank_acct_num  = bank_acct_num;
+  me.bank_acct_name = bank_acct_name;
+
+  toast('Bank account saved ✅', 'ok');
+  toggleBankEdit();
+  loadBankAccount();
+}
+/* ── BOOT ── */
+init();
+</script>
+</body>
+</html>
